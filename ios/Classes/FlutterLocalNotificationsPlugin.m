@@ -67,8 +67,6 @@ NSString *const SOUND = @"sound";
 NSString *const ATTACHMENTS = @"attachments";
 NSString *const ATTACHMENT_IDENTIFIER = @"identifier";
 NSString *const ATTACHMENT_FILE_PATH = @"filePath";
-NSString *const ATTACHMENT_HIDE_THUMBNAIL = @"hideThumbnail";
-NSString *const ATTACHMENT_THUMBNAIL_CLIPPING_RECT = @"thumbnailClippingRect";
 NSString *const INTERRUPTION_LEVEL = @"interruptionLevel";
 NSString *const THREAD_IDENTIFIER = @"threadIdentifier";
 NSString *const PRESENT_ALERT = @"presentAlert";
@@ -81,7 +79,7 @@ NSString *const REPEAT_TIME = @"repeatTime";
 NSString *const HOUR = @"hour";
 NSString *const MINUTE = @"minute";
 NSString *const SECOND = @"second";
-NSString *const SCHEDULED_DATE_TIME = @"scheduledDateTimeISO8601";
+NSString *const SCHEDULED_DATE_TIME = @"scheduledDateTime";
 NSString *const TIME_ZONE_NAME = @"timeZoneName";
 NSString *const MATCH_DATE_TIME_COMPONENTS = @"matchDateTimeComponents";
 NSString *const UILOCALNOTIFICATION_DATE_INTERPRETATION =
@@ -261,8 +259,6 @@ static FlutterError *getFlutterError(NSError *error) {
 }
 
 - (void)pendingLocalNotificationRequests:(FlutterResult _Nonnull)result {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
   NSArray *notifications =
       [UIApplication sharedApplication].scheduledLocalNotifications;
   NSMutableArray<NSDictionary<NSString *, NSObject *> *>
@@ -270,7 +266,6 @@ static FlutterError *getFlutterError(NSError *error) {
           [[NSMutableArray alloc] initWithCapacity:[notifications count]];
   for (int i = 0; i < [notifications count]; i++) {
     UILocalNotification *localNotification = [notifications objectAtIndex:i];
-#pragma clang diagnostic pop
     NSMutableDictionary *pendingNotificationRequest =
         [[NSMutableDictionary alloc] init];
     pendingNotificationRequest[ID] =
@@ -494,8 +489,6 @@ static FlutterError *getFlutterError(NSError *error) {
                             result(@(granted));
                           }];
   } else {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     UIUserNotificationType notificationTypes = 0;
     if (soundPermission) {
       notificationTypes |= UIUserNotificationTypeSound;
@@ -511,17 +504,13 @@ static FlutterError *getFlutterError(NSError *error) {
                                           categories:nil];
     [[UIApplication sharedApplication]
         registerUserNotificationSettings:settings];
-#pragma clang diagnostic pop
     result(@YES);
   }
 }
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 - (UILocalNotification *)buildStandardUILocalNotification:
     (NSDictionary *)arguments {
   UILocalNotification *notification = [[UILocalNotification alloc] init];
-#pragma clang diagnostic pop
   if ([self containsKey:BODY forDictionary:arguments]) {
     notification.alertBody = arguments[BODY];
   }
@@ -561,10 +550,7 @@ static FlutterError *getFlutterError(NSError *error) {
   }
 
   if (presentSound && notification.soundName == nil) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     notification.soundName = UILocalNotificationDefaultSoundName;
-#pragma clang diagnostic pop
   }
 
   notification.userInfo = [self buildUserDict:arguments[ID]
@@ -590,13 +576,10 @@ static FlutterError *getFlutterError(NSError *error) {
                           result:result
                          trigger:nil];
   } else {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     UILocalNotification *notification =
         [self buildStandardUILocalNotification:arguments];
     [[UIApplication sharedApplication]
         presentLocalNotificationNow:notification];
-#pragma clang diagnostic pop
     result(nil);
   }
 }
@@ -614,22 +597,17 @@ static FlutterError *getFlutterError(NSError *error) {
                          trigger:trigger];
 
   } else {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     UILocalNotification *notification =
         [self buildStandardUILocalNotification:arguments];
-#pragma clang diagnostic pop
     NSString *scheduledDateTime = arguments[SCHEDULED_DATE_TIME];
     NSString *timeZoneName = arguments[TIME_ZONE_NAME];
     NSNumber *matchDateComponents = arguments[MATCH_DATE_TIME_COMPONENTS];
     NSNumber *uiLocalNotificationDateInterpretation =
         arguments[UILOCALNOTIFICATION_DATE_INTERPRETATION];
     NSTimeZone *timezone = [NSTimeZone timeZoneWithName:timeZoneName];
-    NSISO8601DateFormatter *dateFormatter =
-        [[NSISO8601DateFormatter alloc] init];
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    [dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss"];
     [dateFormatter setTimeZone:timezone];
-    dateFormatter.formatOptions = NSISO8601DateFormatWithFractionalSeconds |
-                                  NSISO8601DateFormatWithInternetDateTime;
     NSDate *date = [dateFormatter dateFromString:scheduledDateTime];
     notification.fireDate = date;
     if (uiLocalNotificationDateInterpretation != nil) {
@@ -652,10 +630,7 @@ static FlutterError *getFlutterError(NSError *error) {
         notification.repeatInterval = NSCalendarUnitYear;
       }
     }
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     [[UIApplication sharedApplication] scheduleLocalNotification:notification];
-#pragma clang diagnostic pop
     result(nil);
   }
 }
@@ -683,17 +658,11 @@ static FlutterError *getFlutterError(NSError *error) {
                           result:result
                          trigger:trigger];
   } else {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     UILocalNotification *notification =
         [self buildStandardUILocalNotification:arguments];
-#pragma clang diagnostic pop
     notification.fireDate = [NSDate
         dateWithTimeIntervalSince1970:[secondsSinceEpoch longLongValue]];
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     [[UIApplication sharedApplication] scheduleLocalNotification:notification];
-#pragma clang diagnostic pop
     result(nil);
   }
 }
@@ -710,11 +679,8 @@ static FlutterError *getFlutterError(NSError *error) {
                           result:result
                          trigger:trigger];
   } else {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     UILocalNotification *notification =
         [self buildStandardUILocalNotification:arguments];
-#pragma clang diagnostic pop
     NSTimeInterval timeInterval = 0;
     switch ([arguments[REPEAT_INTERVAL] integerValue]) {
     case EveryMinute:
@@ -735,10 +701,7 @@ static FlutterError *getFlutterError(NSError *error) {
       break;
     }
     notification.fireDate = [NSDate dateWithTimeIntervalSinceNow:timeInterval];
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     [[UIApplication sharedApplication] scheduleLocalNotification:notification];
-#pragma clang diagnostic pop
     result(nil);
   }
 }
@@ -764,11 +727,8 @@ static FlutterError *getFlutterError(NSError *error) {
                           result:result
                          trigger:trigger];
   } else {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     UILocalNotification *notification =
         [self buildStandardUILocalNotification:arguments];
-#pragma clang diagnostic pop
     notification.repeatInterval = NSCalendarUnitDay;
     NSDateComponents *dateComponents = [[NSDateComponents alloc] init];
     [dateComponents setHour:[hourComponent integerValue]];
@@ -776,10 +736,7 @@ static FlutterError *getFlutterError(NSError *error) {
     [dateComponents setSecond:[secondsComponent integerValue]];
     NSCalendar *calendar = [NSCalendar currentCalendar];
     notification.fireDate = [calendar dateFromComponents:dateComponents];
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     [[UIApplication sharedApplication] scheduleLocalNotification:notification];
-#pragma clang diagnostic pop
     result(nil);
   }
 }
@@ -807,11 +764,8 @@ static FlutterError *getFlutterError(NSError *error) {
                           result:result
                          trigger:trigger];
   } else {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     UILocalNotification *notification =
         [self buildStandardUILocalNotification:arguments];
-#pragma clang diagnostic pop
     notification.repeatInterval = NSCalendarUnitWeekOfYear;
     NSDateComponents *dateComponents = [[NSDateComponents alloc] init];
     [dateComponents setHour:[hourComponent integerValue]];
@@ -820,10 +774,7 @@ static FlutterError *getFlutterError(NSError *error) {
     [dateComponents setWeekday:[dayOfWeekComponent integerValue]];
     NSCalendar *calendar = [NSCalendar currentCalendar];
     notification.fireDate = [calendar dateFromComponents:dateComponents];
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     [[UIApplication sharedApplication] scheduleLocalNotification:notification];
-#pragma clang diagnostic pop
     result(nil);
   }
 }
@@ -837,24 +788,15 @@ static FlutterError *getFlutterError(NSError *error) {
     [center removePendingNotificationRequestsWithIdentifiers:idsToRemove];
     [center removeDeliveredNotificationsWithIdentifiers:idsToRemove];
   } else {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     NSArray *notifications =
         [UIApplication sharedApplication].scheduledLocalNotifications;
-#pragma clang diagnostic pop
     for (int i = 0; i < [notifications count]; i++) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
       UILocalNotification *localNotification = [notifications objectAtIndex:i];
-#pragma clang diagnostic pop
       NSNumber *userInfoNotificationId =
           localNotification.userInfo[NOTIFICATION_ID];
       if ([userInfoNotificationId longValue] == [id longValue]) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
         [[UIApplication sharedApplication]
             cancelLocalNotification:localNotification];
-#pragma clang diagnostic pop
         break;
       }
     }
@@ -869,10 +811,7 @@ static FlutterError *getFlutterError(NSError *error) {
     [center removeAllPendingNotificationRequests];
     [center removeAllDeliveredNotifications];
   } else {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     [[UIApplication sharedApplication] cancelAllLocalNotifications];
-#pragma clang diagnostic pop
   }
   result(nil);
 }
@@ -916,32 +855,6 @@ static FlutterError *getFlutterError(NSError *error) {
             [NSMutableArray arrayWithCapacity:attachments.count];
         for (NSDictionary *attachment in attachments) {
           NSError *error;
-
-          NSMutableDictionary *options = [[NSMutableDictionary alloc] init];
-          if ([self containsKey:ATTACHMENT_HIDE_THUMBNAIL
-                  forDictionary:attachment]) {
-            NSNumber *hideThumbnail = attachment[ATTACHMENT_HIDE_THUMBNAIL];
-            [options
-                setObject:hideThumbnail
-                   forKey:UNNotificationAttachmentOptionsThumbnailHiddenKey];
-          }
-          if ([self containsKey:ATTACHMENT_THUMBNAIL_CLIPPING_RECT
-                  forDictionary:attachment]) {
-            NSDictionary *thumbnailClippingRect =
-                attachment[ATTACHMENT_THUMBNAIL_CLIPPING_RECT];
-            CGRect rect =
-                CGRectMake([thumbnailClippingRect[@"x"] doubleValue],
-                           [thumbnailClippingRect[@"y"] doubleValue],
-                           [thumbnailClippingRect[@"width"] doubleValue],
-                           [thumbnailClippingRect[@"height"] doubleValue]);
-            NSDictionary *rectDict =
-                CFBridgingRelease(CGRectCreateDictionaryRepresentation(rect));
-            [options
-                setObject:rectDict
-                   forKey:
-                       UNNotificationAttachmentOptionsThumbnailClippingRectKey];
-          }
-
           UNNotificationAttachment *notificationAttachment =
               [UNNotificationAttachment
                   attachmentWithIdentifier:attachment[ATTACHMENT_IDENTIFIER]
@@ -949,7 +862,7 @@ static FlutterError *getFlutterError(NSError *error) {
                                                fileURLWithPath:
                                                    attachment
                                                        [ATTACHMENT_FILE_PATH]]
-                                   options:options
+                                   options:nil
                                      error:&error];
           if (error) {
             result(getFlutterError(error));
@@ -1002,10 +915,15 @@ static FlutterError *getFlutterError(NSError *error) {
   NSNumber *matchDateComponents = arguments[MATCH_DATE_TIME_COMPONENTS];
   NSCalendar *calendar = [NSCalendar currentCalendar];
   NSTimeZone *timezone = [NSTimeZone timeZoneWithName:timeZoneName];
-  NSISO8601DateFormatter *dateFormatter = [[NSISO8601DateFormatter alloc] init];
+  NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+
+  // Needed for some countries, when phone DateTime format is 12H
+  NSLocale *posix = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"];
+
+  [dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss"];
   [dateFormatter setTimeZone:timezone];
-  dateFormatter.formatOptions = NSISO8601DateFormatWithFractionalSeconds |
-                                NSISO8601DateFormatWithInternetDateTime;
+  [dateFormatter setLocale:posix];
+
   NSDate *date = [dateFormatter dateFromString:scheduledDateTime];
 
   calendar.timeZone = timezone;
@@ -1259,12 +1177,9 @@ static FlutterError *getFlutterError(NSError *error) {
 - (BOOL)application:(UIApplication *)application
     didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
   if (launchOptions != nil) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     UILocalNotification *launchNotification =
         (UILocalNotification *)[launchOptions
             objectForKey:UIApplicationLaunchOptionsLocalNotificationKey];
-#pragma clang diagnostic pop
     _launchingAppFromNotification =
         launchNotification != nil &&
         [self isAFlutterLocalNotification:launchNotification.userInfo];
@@ -1282,12 +1197,8 @@ static FlutterError *getFlutterError(NSError *error) {
   return YES;
 }
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-implementations"
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 - (void)application:(UIApplication *)application
     didReceiveLocalNotification:(UILocalNotification *)notification {
-#pragma clang diagnostic pop
   if (@available(iOS 10.0, *)) {
     return;
   }

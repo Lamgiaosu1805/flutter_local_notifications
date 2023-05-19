@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-// ignore: unnecessary_import
 import 'dart:typed_data';
 
 import 'package:device_info_plus/device_info_plus.dart';
@@ -10,10 +9,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as image;
 import 'package:path_provider/path_provider.dart';
+import 'package:rxdart/subjects.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -24,11 +24,11 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 
 /// Streams are created so that app can respond to notification-related events
 /// since the plugin is initialised in the `main` function
-final StreamController<ReceivedNotification> didReceiveLocalNotificationStream =
-    StreamController<ReceivedNotification>.broadcast();
+final BehaviorSubject<ReceivedNotification> didReceiveLocalNotificationSubject =
+    BehaviorSubject<ReceivedNotification>();
 
-final StreamController<String?> selectNotificationStream =
-    StreamController<String?>.broadcast();
+final BehaviorSubject<String?> selectNotificationSubject =
+    BehaviorSubject<String?>();
 
 const MethodChannel platform =
     MethodChannel('dexterx.dev/flutter_local_notifications_example');
@@ -155,7 +155,7 @@ Future<void> main() async {
     requestSoundPermission: false,
     onDidReceiveLocalNotification:
         (int id, String? title, String? body, String? payload) async {
-      didReceiveLocalNotificationStream.add(
+      didReceiveLocalNotificationSubject.add(
         ReceivedNotification(
           id: id,
           title: title,
@@ -183,11 +183,11 @@ Future<void> main() async {
         (NotificationResponse notificationResponse) {
       switch (notificationResponse.notificationResponseType) {
         case NotificationResponseType.selectedNotification:
-          selectNotificationStream.add(notificationResponse.payload);
+          selectNotificationSubject.add(notificationResponse.payload);
           break;
         case NotificationResponseType.selectedNotificationAction:
           if (notificationResponse.actionId == navigationActionId) {
-            selectNotificationStream.add(notificationResponse.payload);
+            selectNotificationSubject.add(notificationResponse.payload);
           }
           break;
       }
@@ -210,7 +210,7 @@ Future<void> _configureLocalTimeZone() async {
     return;
   }
   tz.initializeTimeZones();
-  final String? timeZoneName = await FlutterTimezone.getLocalTimezone();
+  final String? timeZoneName = await FlutterNativeTimezone.getLocalTimezone();
   tz.setLocalLocation(tz.getLocation(timeZoneName!));
 }
 
@@ -289,6 +289,7 @@ class _HomePageState extends State<HomePage> {
             alert: true,
             badge: true,
             sound: true,
+            critical: true,
           );
       await flutterLocalNotificationsPlugin
           .resolvePlatformSpecificImplementation<
@@ -297,6 +298,7 @@ class _HomePageState extends State<HomePage> {
             alert: true,
             badge: true,
             sound: true,
+            critical: true,
           );
     } else if (Platform.isAndroid) {
       final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
@@ -311,7 +313,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _configureDidReceiveLocalNotificationSubject() {
-    didReceiveLocalNotificationStream.stream
+    didReceiveLocalNotificationSubject.stream
         .listen((ReceivedNotification receivedNotification) async {
       await showDialog(
         context: context,
@@ -343,7 +345,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _configureSelectNotificationSubject() {
-    selectNotificationStream.stream.listen((String? payload) async {
+    selectNotificationSubject.stream.listen((String? payload) async {
       await Navigator.of(context).push(MaterialPageRoute<void>(
         builder: (BuildContext context) => SecondPage(payload),
       ));
@@ -352,8 +354,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
-    didReceiveLocalNotificationStream.close();
-    selectNotificationStream.close();
+    didReceiveLocalNotificationSubject.close();
+    selectNotificationSubject.close();
     super.dispose();
   }
 
@@ -828,26 +830,9 @@ class _HomePageState extends State<HomePage> {
                       },
                     ),
                     PaddedElevatedButton(
-                      buttonText:
-                          'Show notification with attachment (with thumbnail)',
+                      buttonText: 'Show notification with attachment',
                       onPressed: () async {
-                        await _showNotificationWithAttachment(
-                            hideThumbnail: false);
-                      },
-                    ),
-                    PaddedElevatedButton(
-                      buttonText:
-                          'Show notification with attachment (no thumbnail)',
-                      onPressed: () async {
-                        await _showNotificationWithAttachment(
-                            hideThumbnail: true);
-                      },
-                    ),
-                    PaddedElevatedButton(
-                      buttonText:
-                          'Show notification with attachment (clipped thumbnail)',
-                      onPressed: () async {
-                        await _showNotificationWithClippedThumbnailAttachment();
+                        await _showNotificationWithAttachment();
                       },
                     ),
                     PaddedElevatedButton(
@@ -887,7 +872,7 @@ class _HomePageState extends State<HomePage> {
                                   'Capabilities of the current system:',
                                   style: Theme.of(context)
                                       .textTheme
-                                      .titleMedium!
+                                      .subtitle1!
                                       .copyWith(fontWeight: FontWeight.bold),
                                 ),
                                 const SizedBox(height: 8),
@@ -1261,7 +1246,7 @@ class _HomePageState extends State<HomePage> {
                           priority: Priority.high,
                           importance: Importance.high,
                           fullScreenIntent: true)),
-                  androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+                  androidAllowWhileIdle: true,
                   uiLocalNotificationDateInterpretation:
                       UILocalNotificationDateInterpretation.absoluteTime);
 
@@ -1378,7 +1363,7 @@ class _HomePageState extends State<HomePage> {
             android: AndroidNotificationDetails(
                 'your channel id', 'your channel name',
                 channelDescription: 'your channel description')),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidAllowWhileIdle: true,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime);
   }
@@ -1456,10 +1441,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _showBigPictureNotification() async {
-    final String largeIconPath =
-        await _downloadAndSaveFile('https://dummyimage.com/48x48', 'largeIcon');
+    final String largeIconPath = await _downloadAndSaveFile(
+        'https://via.placeholder.com/48x48', 'largeIcon');
     final String bigPicturePath = await _downloadAndSaveFile(
-        'https://dummyimage.com/400x800', 'bigPicture');
+        'https://via.placeholder.com/400x800', 'bigPicture');
     final BigPictureStyleInformation bigPictureStyleInformation =
         BigPictureStyleInformation(FilePathAndroidBitmap(bigPicturePath),
             largeIcon: FilePathAndroidBitmap(largeIconPath),
@@ -1486,9 +1471,9 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _showBigPictureNotificationBase64() async {
     final String largeIcon =
-        await _base64encodedImage('https://dummyimage.com/48x48');
+        await _base64encodedImage('https://via.placeholder.com/48x48');
     final String bigPicture =
-        await _base64encodedImage('https://dummyimage.com/400x800');
+        await _base64encodedImage('https://via.placeholder.com/400x800');
 
     final BigPictureStyleInformation bigPictureStyleInformation =
         BigPictureStyleInformation(
@@ -1517,9 +1502,9 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _showBigPictureNotificationURL() async {
     final ByteArrayAndroidBitmap largeIcon = ByteArrayAndroidBitmap(
-        await _getByteArrayFromUrl('https://dummyimage.com/48x48'));
+        await _getByteArrayFromUrl('https://via.placeholder.com/48x48'));
     final ByteArrayAndroidBitmap bigPicture = ByteArrayAndroidBitmap(
-        await _getByteArrayFromUrl('https://dummyimage.com/400x800'));
+        await _getByteArrayFromUrl('https://via.placeholder.com/400x800'));
 
     final BigPictureStyleInformation bigPictureStyleInformation =
         BigPictureStyleInformation(bigPicture,
@@ -1540,10 +1525,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _showBigPictureNotificationHiddenLargeIcon() async {
-    final String largeIconPath =
-        await _downloadAndSaveFile('https://dummyimage.com/48x48', 'largeIcon');
+    final String largeIconPath = await _downloadAndSaveFile(
+        'https://via.placeholder.com/48x48', 'largeIcon');
     final String bigPicturePath = await _downloadAndSaveFile(
-        'https://dummyimage.com/400x800', 'bigPicture');
+        'https://via.placeholder.com/400x800', 'bigPicture');
     final BigPictureStyleInformation bigPictureStyleInformation =
         BigPictureStyleInformation(FilePathAndroidBitmap(bigPicturePath),
             hideExpandedLargeIcon: true,
@@ -1565,7 +1550,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _showNotificationMediaStyle() async {
     final String largeIconPath = await _downloadAndSaveFile(
-        'https://dummyimage.com/128x128/00FF00/000000', 'largeIcon');
+        'https://via.placeholder.com/128x128/00FF00/000000', 'largeIcon');
     final AndroidNotificationDetails androidNotificationDetails =
         AndroidNotificationDetails(
       'media channel id',
@@ -1642,8 +1627,8 @@ class _HomePageState extends State<HomePage> {
       icon: FlutterBitmapAssetAndroidIcon('icons/coworker.png'),
     );
     // download the icon that would be use for the lunch bot person
-    final String largeIconPath =
-        await _downloadAndSaveFile('https://dummyimage.com/48x48', 'largeIcon');
+    final String largeIconPath = await _downloadAndSaveFile(
+        'https://via.placeholder.com/48x48', 'largeIcon');
     // this person object will use an icon that was downloaded
     final Person lunchBot = Person(
       name: 'Lunch bot',
@@ -1684,7 +1669,7 @@ class _HomePageState extends State<HomePage> {
     final NotificationDetails notificationDetails =
         NotificationDetails(android: androidNotificationDetails);
     await flutterLocalNotificationsPlugin.show(
-        id, 'message title', 'message body', notificationDetails);
+        id++, 'message title', 'message body', notificationDetails);
 
     // wait 10 seconds and add another message to simulate another response
     await Future<void>.delayed(const Duration(seconds: 10), () async {
@@ -1814,13 +1799,12 @@ class _HomePageState extends State<HomePage> {
     const NotificationDetails notificationDetails =
         NotificationDetails(android: androidNotificationDetails);
     await flutterLocalNotificationsPlugin.periodicallyShow(
-      id++,
-      'repeating title',
-      'repeating body',
-      RepeatInterval.everyMinute,
-      notificationDetails,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-    );
+        id++,
+        'repeating title',
+        'repeating body',
+        RepeatInterval.everyMinute,
+        notificationDetails,
+        androidAllowWhileIdle: true);
   }
 
   Future<void> _scheduleDailyTenAMNotification() async {
@@ -1834,7 +1818,7 @@ class _HomePageState extends State<HomePage> {
               'daily notification channel name',
               channelDescription: 'daily notification description'),
         ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidAllowWhileIdle: true,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.time);
@@ -1852,7 +1836,7 @@ class _HomePageState extends State<HomePage> {
               'daily notification channel name',
               channelDescription: 'daily notification description'),
         ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidAllowWhileIdle: true,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.time);
@@ -1869,7 +1853,7 @@ class _HomePageState extends State<HomePage> {
               'weekly notification channel name',
               channelDescription: 'weekly notificationdescription'),
         ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidAllowWhileIdle: true,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime);
@@ -1886,7 +1870,7 @@ class _HomePageState extends State<HomePage> {
               'weekly notification channel name',
               channelDescription: 'weekly notificationdescription'),
         ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidAllowWhileIdle: true,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime);
@@ -1903,7 +1887,7 @@ class _HomePageState extends State<HomePage> {
               'monthly notification channel name',
               channelDescription: 'monthly notificationdescription'),
         ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidAllowWhileIdle: true,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.dayOfMonthAndTime);
@@ -1920,7 +1904,7 @@ class _HomePageState extends State<HomePage> {
               'yearly notification channel name',
               channelDescription: 'yearly notification description'),
         ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidAllowWhileIdle: true,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.dateAndTime);
@@ -2174,7 +2158,6 @@ class _HomePageState extends State<HomePage> {
       priority: Priority.high,
       when: DateTime.now().millisecondsSinceEpoch - 120 * 1000,
       usesChronometer: true,
-      chronometerCountDown: true,
     );
     final NotificationDetails notificationDetails =
         NotificationDetails(android: androidNotificationDetails);
@@ -2183,43 +2166,12 @@ class _HomePageState extends State<HomePage> {
         payload: 'item x');
   }
 
-  Future<void> _showNotificationWithAttachment({
-    required bool hideThumbnail,
-  }) async {
+  Future<void> _showNotificationWithAttachment() async {
     final String bigPicturePath = await _downloadAndSaveFile(
-        'https://dummyimage.com/600x200', 'bigPicture.jpg');
+        'https://via.placeholder.com/600x200', 'bigPicture.jpg');
     final DarwinNotificationDetails darwinNotificationDetails =
         DarwinNotificationDetails(attachments: <DarwinNotificationAttachment>[
-      DarwinNotificationAttachment(
-        bigPicturePath,
-        hideThumbnail: hideThumbnail,
-      )
-    ]);
-    final NotificationDetails notificationDetails = NotificationDetails(
-        iOS: darwinNotificationDetails, macOS: darwinNotificationDetails);
-    await flutterLocalNotificationsPlugin.show(
-        id++,
-        'notification with attachment title',
-        'notification with attachment body',
-        notificationDetails);
-  }
-
-  Future<void> _showNotificationWithClippedThumbnailAttachment() async {
-    final String bigPicturePath = await _downloadAndSaveFile(
-        'https://dummyimage.com/600x200', 'bigPicture.jpg');
-    final DarwinNotificationDetails darwinNotificationDetails =
-        DarwinNotificationDetails(attachments: <DarwinNotificationAttachment>[
-      DarwinNotificationAttachment(
-        bigPicturePath,
-        thumbnailClippingRect:
-            // lower right quadrant of the attachment
-            const DarwinNotificationAttachmentThumbnailClippingRect(
-          x: 0.5,
-          y: 0.5,
-          height: 0.5,
-          width: 0.5,
-        ),
-      )
+      DarwinNotificationAttachment(bigPicturePath)
     ]);
     final NotificationDetails notificationDetails = NotificationDetails(
         iOS: darwinNotificationDetails, macOS: darwinNotificationDetails);
@@ -2441,7 +2393,7 @@ class _HomePageState extends State<HomePage> {
     if (Platform.isAndroid) {
       final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
       final AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-      if (androidInfo.version.sdkInt < 23) {
+      if (androidInfo.version.sdkInt! < 23) {
         return const Text(
           '"getActiveNotifications" is available only for Android 6.0 or newer',
         );
@@ -2488,14 +2440,13 @@ class _HomePageState extends State<HomePage> {
                     'title: ${activeNotification.title}\n'
                     'body: ${activeNotification.body}',
                   ),
-                  if (Platform.isAndroid && activeNotification.id != null)
-                    TextButton(
-                      child: const Text('Get messaging style'),
-                      onPressed: () {
-                        _getActiveNotificationMessagingStyle(
-                            activeNotification.id!, activeNotification.tag);
-                      },
-                    ),
+                  TextButton(
+                    child: const Text('Get messaging style'),
+                    onPressed: () {
+                      _getActiveNotificationMessagingStyle(
+                          activeNotification.id, activeNotification.tag);
+                    },
+                  ),
                   const Divider(color: Colors.black),
                 ],
               ),

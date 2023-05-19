@@ -1,18 +1,26 @@
-/// Type used to indicate the importance and delivery timing of a notification.
+import 'package:flutter/foundation.dart';
+
+/// Constants that indicate the importance and delivery
+/// timing of a notification.
 ///
-/// Corresponds to [UNNotificationInterruptionLevel](https://developer.apple.com/documentation/usernotifications/unnotificationinterruptionlevel).
-enum InterruptionLevel {
+/// This mirrors the following Apple API
+/// https://developer.apple.com/documentation/usernotifications/unnotificationinterruptionlevel
+@immutable
+class InterruptionLevel {
+  /// Constructs an instance of [InterruptionLevel]
+  const InterruptionLevel(this.value);
+
   /// The system adds the notification to the notification
   /// list without lighting up the screen or playing a sound.
   ///
-  /// Corresponds to [`UNNotificationInterruptionLevel.passive`](https://developer.apple.com/documentation/usernotifications/unnotificationinterruptionlevel/passive).
-  passive,
+  /// https://developer.apple.com/documentation/usernotifications/unnotificationinterruptionlevel/passive
+  static const InterruptionLevel passive = InterruptionLevel(0);
 
   /// The system presents the notification immediately,
   /// lights up the screen, and can play a sound.
   ///
-  /// Corresponds to [`UNNotificationInterruptionLevel.active`](https://developer.apple.com/documentation/usernotifications/unnotificationinterruptionlevel/active).
-  active,
+  /// https://developer.apple.com/documentation/usernotifications/unnotificationinterruptionlevel/active
+  static const InterruptionLevel active = InterruptionLevel(1);
 
   /// The system presents the notification immediately,
   /// lights up the screen, and can play a sound,
@@ -22,8 +30,8 @@ enum InterruptionLevel {
   /// capability needs to be added to the iOS project.
   /// See https://help.apple.com/xcode/mac/current/#/dev88ff319e7
   ///
-  /// Corresponds to [`UNNotificationInterruptionLevel.timeSensitive`](https://developer.apple.com/documentation/usernotifications/unnotificationinterruptionlevel/timesensitive).
-  timeSensitive,
+  /// https://developer.apple.com/documentation/usernotifications/unnotificationinterruptionlevel/timesensitive
+  static const InterruptionLevel timeSensitive = InterruptionLevel(2);
 
   /// The system presents the notification immediately,
   /// lights up the screen, and bypasses the mute switch to play a sound.
@@ -31,6 +39,16 @@ enum InterruptionLevel {
   /// Subject to specific approval from Apple:
   /// https://developer.apple.com/contact/request/notifications-critical-alerts-entitlement/
   ///
-  /// Corresponds to [`UNNotificationInterruptionLevel.critical`](https://developer.apple.com/documentation/usernotifications/unnotificationinterruptionlevel/critical).
-  critical
+  /// https://developer.apple.com/documentation/usernotifications/unnotificationinterruptionlevel/critical
+  static const InterruptionLevel critical = InterruptionLevel(3);
+
+  /// The integer representation.
+  final int value;
+
+  @override
+  int get hashCode => value;
+
+  @override
+  bool operator ==(Object other) =>
+      other is InterruptionLevel && other.value == value;
 }

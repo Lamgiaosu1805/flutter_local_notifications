@@ -1,6 +1,4 @@
-// ignore: unnecessary_import
 import 'dart:typed_data';
-
 import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -148,7 +146,6 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
-              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -269,7 +266,6 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
-              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -352,7 +348,6 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
-              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -436,7 +431,6 @@ void main() {
               'showWhen': true,
               'when': timestamp,
               'usesChronometer': false,
-              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -521,7 +515,6 @@ void main() {
               'showWhen': true,
               'when': timestamp,
               'usesChronometer': true,
-              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -610,7 +603,6 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
-              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -698,7 +690,6 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
-              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -785,7 +776,6 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
-              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -874,7 +864,6 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
-              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -978,7 +967,6 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
-              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -1076,7 +1064,6 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
-              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -1180,7 +1167,6 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
-              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -1276,7 +1262,6 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
-              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -1376,7 +1361,6 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
-              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -1467,7 +1451,6 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
-              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -1555,7 +1538,6 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
-              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -1650,7 +1632,6 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
-              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -1774,7 +1755,6 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
-              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -1860,7 +1840,7 @@ void main() {
                   'calledAt': now.millisecondsSinceEpoch,
                   'repeatInterval': repeatInterval.index,
                   'platformSpecifics': <String, Object?>{
-                    'scheduleMode': 'exact',
+                    'allowWhileIdle': false,
                     'icon': null,
                     'channelId': 'channelId',
                     'channelName': 'channelName',
@@ -1886,7 +1866,6 @@ void main() {
                     'showWhen': true,
                     'when': null,
                     'usesChronometer': false,
-                    'chronometerCountDown': false,
                     'showProgress': false,
                     'maxProgress': 0,
                     'progress': 0,
@@ -1943,7 +1922,7 @@ void main() {
             'notification body',
             scheduledDate,
             const NotificationDetails(android: androidNotificationDetails),
-            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            androidAllowWhileIdle: true,
             uiLocalNotificationDateInterpretation:
                 UILocalNotificationDateInterpretation.absoluteTime);
         expect(
@@ -1955,9 +1934,8 @@ void main() {
               'payload': '',
               'timeZoneName': 'Australia/Sydney',
               'scheduledDateTime': convertDateToISO8601String(scheduledDate),
-              'scheduledDateTimeISO8601': scheduledDate.toIso8601String(),
               'platformSpecifics': <String, Object?>{
-                'scheduleMode': 'exactAllowWhileIdle',
+                'allowWhileIdle': true,
                 'icon': null,
                 'channelId': 'channelId',
                 'channelName': 'channelName',
@@ -1983,7 +1961,6 @@ void main() {
                 'showWhen': true,
                 'when': null,
                 'usesChronometer': false,
-                'chronometerCountDown': false,
                 'showProgress': false,
                 'maxProgress': 0,
                 'progress': 0,
@@ -2037,7 +2014,7 @@ void main() {
             'notification body',
             scheduledDate,
             const NotificationDetails(android: androidNotificationDetails),
-            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            androidAllowWhileIdle: true,
             uiLocalNotificationDateInterpretation:
                 UILocalNotificationDateInterpretation.absoluteTime,
             matchDateTimeComponents: DateTimeComponents.time);
@@ -2050,10 +2027,9 @@ void main() {
               'payload': '',
               'timeZoneName': 'Australia/Sydney',
               'scheduledDateTime': convertDateToISO8601String(scheduledDate),
-              'scheduledDateTimeISO8601': scheduledDate.toIso8601String(),
               'matchDateTimeComponents': DateTimeComponents.time.index,
               'platformSpecifics': <String, Object?>{
-                'scheduleMode': 'exactAllowWhileIdle',
+                'allowWhileIdle': true,
                 'icon': null,
                 'channelId': 'channelId',
                 'channelName': 'channelName',
@@ -2079,7 +2055,6 @@ void main() {
                 'showWhen': true,
                 'when': null,
                 'usesChronometer': false,
-                'chronometerCountDown': false,
                 'showProgress': false,
                 'maxProgress': 0,
                 'progress': 0,
@@ -2133,7 +2108,7 @@ void main() {
             'notification body',
             scheduledDate,
             const NotificationDetails(android: androidNotificationDetails),
-            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            androidAllowWhileIdle: true,
             uiLocalNotificationDateInterpretation:
                 UILocalNotificationDateInterpretation.absoluteTime,
             matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime);
@@ -2146,11 +2121,10 @@ void main() {
               'payload': '',
               'timeZoneName': 'Australia/Sydney',
               'scheduledDateTime': convertDateToISO8601String(scheduledDate),
-              'scheduledDateTimeISO8601': scheduledDate.toIso8601String(),
               'matchDateTimeComponents':
                   DateTimeComponents.dayOfWeekAndTime.index,
               'platformSpecifics': <String, Object?>{
-                'scheduleMode': 'exactAllowWhileIdle',
+                'allowWhileIdle': true,
                 'icon': null,
                 'channelId': 'channelId',
                 'channelName': 'channelName',
@@ -2176,7 +2150,6 @@ void main() {
                 'showWhen': true,
                 'when': null,
                 'usesChronometer': false,
-                'chronometerCountDown': false,
                 'showProgress': false,
                 'maxProgress': 0,
                 'progress': 0,
@@ -2386,7 +2359,7 @@ void main() {
               'payload': '',
               'platformSpecifics': null,
             },
-            'startType': AndroidServiceStartType.startSticky.index,
+            'startType': AndroidServiceStartType.startSticky.value,
             'foregroundServiceTypes': null
           }));
     });
@@ -2470,7 +2443,6 @@ void main() {
                   'showWhen': true,
                   'when': null,
                   'usesChronometer': false,
-                  'chronometerCountDown': false,
                   'showProgress': false,
                   'maxProgress': 0,
                   'progress': 0,
@@ -2501,7 +2473,7 @@ void main() {
                   'audioAttributesUsage': 5,
                 },
               },
-              'startType': AndroidServiceStartType.startSticky.index,
+              'startType': AndroidServiceStartType.startSticky.value,
               'foregroundServiceTypes': null
             },
           ));
